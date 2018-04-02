@@ -2,6 +2,8 @@ TESTS = \
     test_cpy \
     test_ref
 
+TEST_INPUT = s Taiwan
+
 CFLAGS = -Wall -Werror -g
 
 # Control the build verbosity                                                   
@@ -45,4 +47,16 @@ clean:
 	$(RM) $(TESTS) $(OBJS)
 	$(RM) $(deps)
 
+astyle:
+	astyle --style=kr --indent=spaces=4 --suffix=none *.[ch]
+
+bench: $(TESTS)
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		-e cache-misses,cache-references,instructions,cycles \
+		./test_cpy --bench $(TEST_INPUT)
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		-e cache-misses,cache-references,instructions,cycles \
+		./test_ref --bench $(TEST_INPUT)
 -include $(deps)
