@@ -2,7 +2,7 @@ TESTS = \
     test_cpy \
     test_ref
 
-TEST_INPUT = s Taiwan
+TEST_INPUT = s Tai
 
 CFLAGS = -Wall -Werror -g
 
