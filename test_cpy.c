@@ -55,8 +55,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    t1 = tvgetf();
     while ((rtn = fscanf(fp, "%s", word)) != EOF) {
+        t1 = tvgetf();
         char *p = word;
         if (!tst_ins_del(&root, &p, INS, CPY)) {
             fprintf(stderr, "error: memory exhausted, tst_insert.\n");

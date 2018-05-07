@@ -9,6 +9,7 @@
 enum { INS, DEL, WRDMAX = 256, STKMAX = 512, LMAX = 1024 };
 #define REF INS
 #define CPY DEL
+#define poolSize 10000000
 
 /* timing helper function */
 static double tvgetf(void)
@@ -34,8 +35,6 @@ static void rmcrlf(char *s)
 
 #define IN_FILE "cities.txt"
 
-char word_arr[259112][WRDMAX];
-
 int main(int argc, char **argv)
 {
     char word[WRDMAX] = "";
@@ -57,10 +56,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    t1 = tvgetf();
+    char *pPool = (char *) malloc(poolSize * sizeof(char));
+    char *pTop = pPool;
 
-    while ((rtn = fscanf(fp, "%s", word_arr[idx])) != EOF) {
-        char *p = word_arr[idx];
+    while ((rtn = fscanf(fp, "%s", pTop)) != EOF) {
+        t1 = tvgetf();
+        char *p = pTop;
         /* FIXME: insert reference to each string */
         if (!tst_ins_del(&root, &p, INS, REF)) {
             fprintf(stderr, "error: memory exhausted, tst_insert.\n");
@@ -68,6 +69,7 @@ int main(int argc, char **argv)
             return 1;
         }
         idx++;
+        pTop += (strlen(pTop) + 1);
     }
     t2 = tvgetf();
 
@@ -94,26 +96,28 @@ int main(int argc, char **argv)
         case 'a':
             printf("enter word to add: ");
             if (bench_flag == 0) {
-                if (!fgets(word, sizeof word, stdin)) {
+                if (!fgets(pTop, sizeof word, stdin)) {
                     fprintf(stderr, "error: insufficient input.\n");
                     break;
                 }
-                rmcrlf(word);
+                rmcrlf(pTop);
             } else {
-                strcpy(word, argv[3]);
+                strcpy(pTop, argv[3]);
             }
-            p = word;
+            p = pTop;
             t1 = tvgetf();
             /* FIXME: insert reference to each string */
             res = tst_ins_del(&root, &p, INS, REF);
             t2 = tvgetf();
             if (res) {
                 idx++;
+                pTop += (strlen(pTop) + 1);
                 printf("  %s - inserted in %.6f sec. (%d words in tree)\n",
                        (char *) res, t2 - t1, idx);
             } else
                 printf("  %s - already exists in list.\n", (char *) res);
             if (bench_flag == 1) {
+                free(pPool);
                 return 0;
             }
             break;
@@ -136,6 +140,7 @@ int main(int argc, char **argv)
             else
                 printf("  %s not found.\n", word);
             if (bench_flag == 1) {
+                free(pPool);
                 return 0;
             }
             break;
@@ -160,6 +165,7 @@ int main(int argc, char **argv)
             } else
                 printf("  %s - not found\n", word);
             if (bench_flag == 1) {
+                free(pPool);
                 return 0;
             }
             break;
@@ -187,11 +193,13 @@ int main(int argc, char **argv)
                 idx--;
             }
             if (bench_flag == 1) {
+                free(pPool);
                 return 0;
             }
             break;
         case 'q':
             tst_free(root);
+            free(pPool);
             return 0;
             break;
         default:
